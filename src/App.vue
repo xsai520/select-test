@@ -1,0 +1,292 @@
+<template>
+  <div id="app">
+    <div class="select-box">
+      <div class="select-input-area" :class="{active:isSelectListOpen}">
+        <div class="select-input-box"  @click="openSelectList" >
+          <ul class="select-input-list">
+            <li class="select-selection__choice" v-for="item in select_input_list" :key="item.id">
+              <span>{{item.name}}</span>
+              <span  class="icon iconfont delete-icon" @deleteSelectedItem(item.id)>&#xe602;</span>
+            </li>
+            <li class="select-search--inline">
+              <div class="select-search__field__wrap">
+                <input autocomplete="off" class="select-search__field">
+              </div>
+            </li>
+          </ul>
+        </div>
+        <!--<span class="icon iconfont delete-icon" contenteditable="false" @click="deleteInputSelected">&#xe61c;</span>
+        <span class="select-icon" contenteditable="false">
+            <i class="icon iconfont" :class="{selectIconActive: isSelectListOpen}">&#xe601;</i>
+        </span>-->
+      </div>
+      <div class="select-list-box" :class="{'selectListOpen':isSelectListOpen,'selectListEmpty': isSelectListEmpty}">
+        <ul class="select-list">
+          <li v-for="item in select_list" :key="item.id" @click="selectItem(item.id)" :class="{itemActive:item.active}"><span>{{item.name}}</span><i class="selected-icon icon iconfont">&#xe64c;</i></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'App',
+  data(){
+      return{
+        isSelectListOpen:false,//判断列表结构是否展开
+        count:0,//输入区域点击的次数 奇数展开 偶数闭合
+        isSelectedItem:false,//条目是否选中
+        isSelectListEmpty:true,//如果select_list为空数组的时候是true，否则为false
+        select_input_list:[],
+        select_list:[]
+      }
+  },
+  mounted(){
+
+  },
+  methods:{
+    openSelectList(){
+      //点击之后展现selectList
+      if(this.count==0){
+        this.getSelectList();
+      }
+      this.count++;
+      if(this.count % 2 == 0){ //偶数
+        this.isSelectListOpen=false;
+      }else{
+        this.isSelectListOpen=true;
+      }
+    },
+    deleteSelectedItem(ev){
+      debugger
+      let oEvent = ev || event;
+      oEvent.cancelBubble = true;
+      oEvent.stopPropagation();
+    },
+//    deleteInputSelected(ev){//点击删除按钮删除编辑区域中内容
+//      let oEvent = ev || event;
+//      //js阻止事件冒泡
+//      oEvent.cancelBubble = true;
+//      oEvent.stopPropagation();
+//      this.select_input_list=[];//将输入区域清除
+//      this.select_list.forEach(function(v,i){ //将蓝色对号的数据清除
+//        v.active=false;
+//      })
+//    },
+    selectItem(id){
+        //选择list中的数据 奇数是选中 偶数是取消选中 将选中的塞入到 select_input_list 取消的从select_input_list中剔除
+      let _this = this;
+      this.select_list.forEach((v)=> {
+        if(v.id==id){
+            v.active = !v.active;
+            if(v.active){ //v.active==true 说明是选中的
+              this.select_input_list.push(v);
+            }else{ //取消选中
+              _this.select_input_list.forEach((v1,i1)=>{
+                  if(id==v1.id){ //点击的item中的id与输入区域中某条数据的id如果相同的话，则剔除
+                    _this.select_input_list.splice(i1,1)
+                  }
+              })
+            }
+        }
+      })
+    },
+    getSelectList(){
+        this.$http.get('/list').then((res)=>{
+           setTimeout(()=>{
+             if(res.data.data && res.data.data.length>0){
+               this.isSelectListEmpty = false;
+               this.select_list = res.data.data;
+             }
+           },2000)
+
+        })
+    }
+  }
+}
+</script>
+
+<style>
+ *{
+   margin:0;
+   padding:0;
+ }
+ ul li{
+   list-style: none;
+ }
+#app {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  margin-top: 60px;
+  background: #fff;
+}
+/*最外层包裹*/
+.select-box{
+  width:320px;
+  margin:0 auto;
+  color: #999;
+}
+/*输入区域最外层*/
+ .select-input-area{
+   position: relative;
+   width: inherit;
+   min-height:32px;
+   border: 1px solid #ddd;
+   box-sizing: border-box;
+   border-top-left-radius: 4px;
+   border-top-right-radius: 4px;
+ }
+ .select-input-area.active{
+   border: 1px solid #1890FF;
+ }
+ /*输入区域*/
+ .select-input-box{
+   width:320px;
+   min-height:30px;
+   line-height: 30px;
+   padding: 0 8px;
+   box-sizing: border-box;
+   overflow: hidden;
+   outline: #1890FF;
+   text-align: left;
+   caret-color:#1890FF;
+ }
+ /*.select-input-list{*/
+   /*width:320px;*/
+   /*!*padding:4px 0;*!*/
+   /*background:rgba(0,0,0,0);*/
+ /*}*/
+ /*.select-input-box:empty:before{*/
+   /*content: attr(placeholder);*/
+   /*color:#ddd;*/
+ /*}*/
+ /*.select-input-box:focus:before{*/
+   /*content:none;*/
+ /*}*/
+ .select-input-list li{
+   float: left;
+   height: 22px;
+   margin: 4px;
+   /*position: relative;*/
+   /*float: left;*/
+   /*height: 22px;*/
+   /*line-height: 22px;*/
+   /*margin: 0 5px 4px 0;*/
+   /*padding:0 15px 0 5px;*/
+   /*border-radius: 4px;*/
+   /*background: #eee;*/
+   /*cursor: default;*/
+   /*user-select: none;*/
+   /*z-index:1;*/
+ }
+ .delete-icon{
+   display: inline-block;
+   position: absolute;
+   right: 0px;
+   z-index: 2;
+   cursor: pointer;
+
+ }
+ /*.delete-icon{*/
+   /*position: absolute;*/
+   /*display: inline-block;*/
+   /*top: 7px;*/
+   /*right: 35px;*/
+   /*color: #ddd;*/
+   /*cursor: pointer;*/
+ /*}*/
+/*.select-icon{*/
+  /*position: absolute;*/
+  /*display: inline-block;*/
+  /*width:30px;*/
+  /*height:30px;*/
+  /*top: 0;*/
+  /*right: 1px;*/
+  /*padding: 4px 0 0 0;*/
+  /*box-sizing: border-box;*/
+  /*font-size: 18px;*/
+  /*color: #ddd;*/
+  /*background: #fff;*/
+  /*cursor: pointer;*/
+  /*border-left: 1px solid #ddd;*/
+ /*}*/
+  /*.select-icon .selectIconActive{*/
+    /*display: inline-block;*/
+    /*transform:rotate(180deg);*/
+    /*-ms-transform:rotate(180deg); 	!* IE 9 *!*/
+    /*-moz-transform:rotate(180deg); 	!* Firefox *!*/
+    /*-webkit-transform:rotate(180deg); !* Safari 和 Chrome *!*/
+    /*-o-transform:rotate(180deg); 	!* Opera *!*/
+  /*}*/
+  /*列表*/
+  .select-list-box{
+    display: none;
+    width: 320px;
+    height:307px;
+    /*max-height: 306px;*/
+    border:1px solid #1890FF;
+    border-top-width: 0;
+    box-sizing: border-box;
+    overflow-y: scroll;
+  }
+  /*修改滚动条的样式*/
+ /*定义滚动条宽高及背景，宽高分别对应横竖滚动条的尺寸*/
+ .select-list-box::-webkit-scrollbar{
+   width: 4px;
+   height: 16px;
+   background-color: #fff;
+ }
+ /*定义滚动条的轨道，内阴影及圆角*/
+ .select-list-box::-webkit-scrollbar-track{
+   border-radius: 10px;
+   background-color: #fff;
+ }
+ /*定义滑块，内阴影及圆角*/
+ .select-list-box::-webkit-scrollbar-thumb{
+   height: 20px;
+   border-radius: 10px;
+   -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+   background-color: #ddd;
+ }
+ .select-list-box.selectListOpen{
+   display: block;
+ }
+ .select-list-box.selectListEmpty{
+   background: url("./assets/images/loading.gif") center center no-repeat;
+ }
+  .select-list{
+    padding: 8px 0;
+  }
+  .select-list li{
+    height:29px;
+    line-height: 29px;
+    padding:0 10px;
+    text-align: left;
+  }
+  .select-list li span{
+    color: #999;
+  }
+  .select-list li:hover{
+    background: #eee;
+    cursor: pointer;
+  }
+  /*selected-icon 对号图标
+  1、如果没有选中某条 划过时候出现灰色对号
+  2、如果已经选中了某条 划过的时候出现蓝色
+  */
+  .select-list li .selected-icon{
+    float: right;
+    font-size: 18px;
+    color:#fff;
+  }
+  .select-list li:hover .selected-icon{
+    color:#ddd;
+  }
+  .select-list li.itemActive .selected-icon{
+    float: right;
+    color:#1890FF;
+  }
+</style>
