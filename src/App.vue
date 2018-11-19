@@ -2,15 +2,15 @@
   <div id="app">
     <div class="select-box">
       <div class="select-input-area" :class="{active:isSelectListOpen}">
-        <div class="select-input-box"  @click="openSelectList" >
+        <div class="select-input-box"   @click="openSelectList"><!--@click="openSelectList"-->
           <ul class="select-input-list">
             <li class="select-selection__choice" v-for="item in select_input_list" :key="item.id">
-              <span>{{item.name}}</span>
-              <span  class="icon iconfont delete-icon" @deleteSelectedItem(item.id)>&#xe602;</span>
+              <div>{{item.name}}</div>
+              <span  class="icon iconfont select-selection__choice__remove" @click="deleteSelectedItem(item.id)">&#xe602;</span>
             </li>
             <li class="select-search--inline">
               <div class="select-search__field__wrap">
-                <input autocomplete="off" class="select-search__field">
+                <input autocomplete="off" class="select-search__field" id="inputVal" ref="inputVal">
               </div>
             </li>
           </ul>
@@ -35,7 +35,7 @@ export default {
   data(){
       return{
         isSelectListOpen:false,//判断列表结构是否展开
-        count:0,//输入区域点击的次数 奇数展开 偶数闭合
+//        count:0,//输入区域点击的次数 奇数展开 偶数闭合
         isSelectedItem:false,//条目是否选中
         isSelectListEmpty:true,//如果select_list为空数组的时候是true，否则为false
         select_input_list:[],
@@ -43,26 +43,43 @@ export default {
       }
   },
   mounted(){
-
+    this.getSelectList();
+  },
+  computed:{
+    inputValue:function () {
+      debugger
+    }
   },
   methods:{
     openSelectList(){
+      this.isSelectListOpen=true;
+      this.$nextTick(function () {
+        this.$refs.inputVal.focus()
+      })
+      //每次点击 select-input-box 框的时候都使input focus
       //点击之后展现selectList
-      if(this.count==0){
-        this.getSelectList();
-      }
-      this.count++;
-      if(this.count % 2 == 0){ //偶数
-        this.isSelectListOpen=false;
-      }else{
-        this.isSelectListOpen=true;
-      }
+//      if(this.count==0){
+//
+//      }
+//      this.count++;
+//      if(this.count % 2 == 0){ //偶数
+//        this.isSelectListOpen=false;
+//      }else{
+//        this.isSelectListOpen=true;
+//      }
     },
-    deleteSelectedItem(ev){
-      debugger
-      let oEvent = ev || event;
+    deleteSelectedItem(id){
+      let oEvent = window.event || arguments.callee.caller.arguments[0];
       oEvent.cancelBubble = true;
       oEvent.stopPropagation();
+      this.select_input_list.forEach((v,i)=>{
+        if(v.id==id){
+          this.select_input_list.splice(i,1)
+        }
+      });
+      this.select_list.forEach((v,i)=>{
+
+      })
     },
 //    deleteInputSelected(ev){//点击删除按钮删除编辑区域中内容
 //      let oEvent = ev || event;
@@ -166,10 +183,13 @@ export default {
  /*.select-input-box:focus:before{*/
    /*content:none;*/
  /*}*/
+ .select-input-list{
+   clear: both;
+ }
  .select-input-list li{
    float: left;
-   height: 22px;
-   margin: 4px;
+   /*height: 22px;*/
+   /*margin: 4px;*/
    /*position: relative;*/
    /*float: left;*/
    /*height: 22px;*/
@@ -182,10 +202,31 @@ export default {
    /*user-select: none;*/
    /*z-index:1;*/
  }
- .delete-icon{
+.select-selection__choice{
+  position: relative;
+  height: 24px;
+  line-height: 25px;
+  margin-top: 3px;
+  margin-right: 5px;
+  padding: 0 20px 0 10px;
+  background-color: #eee;
+  border-radius: 2px;
+  cursor: default;
+  overflow: hidden;
+  user-select: none;
+}
+ .select-input-list li .select-search__field{
+   width: .75em;
+   height:20px;
+   max-width: 100%;
+   border: none;
+   outline: none;
+ }
+ .select-selection__choice__remove{
    display: inline-block;
    position: absolute;
-   right: 0px;
+   top: 0;
+   right: 2px;
    z-index: 2;
    cursor: pointer;
 
