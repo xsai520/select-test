@@ -2,18 +2,23 @@
   <div id="app">
     <div class="select-box">
       <div class="select-input-area" :class="{active:isSelectListOpen}">
-        <div class="select-input-box"   @click="openSelectList"><!--@click="openSelectList"-->
-          <ul class="select-input-list">
-            <li class="select-selection__choice" v-for="item in select_input_list" :key="item.id">
-              <div>{{item.name}}</div>
-              <span  class="icon iconfont select-selection__choice__remove" @click="deleteSelectedItem(item.id)">&#xe602;</span>
-            </li>
-            <li class="select-search--inline">
-              <div class="select-search__field__wrap">
-                <input autocomplete="off" class="select-search__field" id="inputVal" ref="inputVal">
-              </div>
-            </li>
-          </ul>
+        <div class="select-input-box"><!--@click="openSelectList"-->
+          <div class="select-input-render" @click="openSelectList">
+            <ul class="select-input-list">
+              <li class="select-selection__choice" v-for="item in select_input_list" :key="item.id">
+                <div>{{item.name}}</div>
+                <span  class="icon iconfont select-selection__choice__remove" @click="deleteSelectedItem(item.id)">&#xe602;</span>
+              </li>
+              <li class="select-search--inline">
+                <div class="select-search__field__wrap">
+                  <input autocomplete="off" class="select-search__field" v-model="inputValue" :style="{width:inputWidth+'px'}"
+                         @keyup="keyUp()" id="inputVal" ref="inputVal">
+                  <span ref="spanVal" class="select-search__field__mirror">{{inputValue}}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
         </div>
         <!--<span class="icon iconfont delete-icon" contenteditable="false" @click="deleteInputSelected">&#xe61c;</span>
         <span class="select-icon" contenteditable="false">
@@ -38,6 +43,8 @@ export default {
 //        count:0,//输入区域点击的次数 奇数展开 偶数闭合
         isSelectedItem:false,//条目是否选中
         isSelectListEmpty:true,//如果select_list为空数组的时候是true，否则为false
+        inputValue:"",
+        inputWidth:34,
         select_input_list:[],
         select_list:[]
       }
@@ -45,28 +52,26 @@ export default {
   mounted(){
     this.getSelectList();
   },
-  computed:{
-    inputValue:function () {
-      debugger
-    }
-  },
   methods:{
     openSelectList(){
       this.isSelectListOpen=true;
       this.$nextTick(function () {
         this.$refs.inputVal.focus()
       })
-      //每次点击 select-input-box 框的时候都使input focus
-      //点击之后展现selectList
-//      if(this.count==0){
-//
-//      }
-//      this.count++;
-//      if(this.count % 2 == 0){ //偶数
-//        this.isSelectListOpen=false;
-//      }else{
-//        this.isSelectListOpen=true;
-//      }
+    },
+    keyUp(){
+        this.inputValue = this.$refs.inputVal.value;
+        this.inputWidth = this.$refs.spanVal.offsetWidth;
+      this.$http.get('/api/getItem',{name:this.$refs.inputVal.value}).then((res)=>{
+          console.log(res)
+        setTimeout(()=>{
+          if(res.data.data && res.data.data.length>0){
+            this.isSelectListEmpty = false;
+            this.select_list = res.data.data;
+          }
+        },2000)
+
+      })
     },
     deleteSelectedItem(id){
       let oEvent = window.event || arguments.callee.caller.arguments[0];
@@ -171,36 +176,17 @@ export default {
    text-align: left;
    caret-color:#1890FF;
  }
- /*.select-input-list{*/
-   /*width:320px;*/
-   /*!*padding:4px 0;*!*/
-   /*background:rgba(0,0,0,0);*/
- /*}*/
- /*.select-input-box:empty:before{*/
-   /*content: attr(placeholder);*/
-   /*color:#ddd;*/
- /*}*/
- /*.select-input-box:focus:before{*/
-   /*content:none;*/
- /*}*/
+ .select-input-render{
+   width: 304px;
+   height: auto;
+   min-height: 30px;
+   overflow: hidden;
+ }
  .select-input-list{
    clear: both;
  }
  .select-input-list li{
    float: left;
-   /*height: 22px;*/
-   /*margin: 4px;*/
-   /*position: relative;*/
-   /*float: left;*/
-   /*height: 22px;*/
-   /*line-height: 22px;*/
-   /*margin: 0 5px 4px 0;*/
-   /*padding:0 15px 0 5px;*/
-   /*border-radius: 4px;*/
-   /*background: #eee;*/
-   /*cursor: default;*/
-   /*user-select: none;*/
-   /*z-index:1;*/
  }
 .select-selection__choice{
   position: relative;
@@ -216,11 +202,29 @@ export default {
   user-select: none;
 }
  .select-input-list li .select-search__field{
+   flex:1;
    width: .75em;
    height:20px;
    max-width: 100%;
    border: none;
    outline: none;
+ }
+ .select-search--inline{
+   width: auto;
+   max-width: 100%;
+ }
+ .select-search__field__wrap{
+   position: relative;
+   width: 100%;
+   height: 100%;
+ }
+ .select-search__field__mirror{
+   position: absolute;
+   top: 0;
+   left: 0;
+   white-space: pre;
+   pointer-events: none;
+   opacity: 0;
  }
  .select-selection__choice__remove{
    display: inline-block;
@@ -231,37 +235,6 @@ export default {
    cursor: pointer;
 
  }
- /*.delete-icon{*/
-   /*position: absolute;*/
-   /*display: inline-block;*/
-   /*top: 7px;*/
-   /*right: 35px;*/
-   /*color: #ddd;*/
-   /*cursor: pointer;*/
- /*}*/
-/*.select-icon{*/
-  /*position: absolute;*/
-  /*display: inline-block;*/
-  /*width:30px;*/
-  /*height:30px;*/
-  /*top: 0;*/
-  /*right: 1px;*/
-  /*padding: 4px 0 0 0;*/
-  /*box-sizing: border-box;*/
-  /*font-size: 18px;*/
-  /*color: #ddd;*/
-  /*background: #fff;*/
-  /*cursor: pointer;*/
-  /*border-left: 1px solid #ddd;*/
- /*}*/
-  /*.select-icon .selectIconActive{*/
-    /*display: inline-block;*/
-    /*transform:rotate(180deg);*/
-    /*-ms-transform:rotate(180deg); 	!* IE 9 *!*/
-    /*-moz-transform:rotate(180deg); 	!* Firefox *!*/
-    /*-webkit-transform:rotate(180deg); !* Safari 和 Chrome *!*/
-    /*-o-transform:rotate(180deg); 	!* Opera *!*/
-  /*}*/
   /*列表*/
   .select-list-box{
     display: none;
@@ -306,6 +279,7 @@ export default {
     line-height: 29px;
     padding:0 10px;
     text-align: left;
+    cursor: pointer;
   }
   .select-list li span{
     color: #999;
